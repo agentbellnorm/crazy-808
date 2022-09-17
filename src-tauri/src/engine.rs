@@ -1,4 +1,4 @@
-use std::{thread, time, sync::{Arc, Mutex, mpsc::{Sender}}};
+use std::{thread, time, sync::{Arc, Mutex, mpsc::Sender}};
 use crate::sound::Sound;
 
 const NUMBER_OF_CHANNELS: usize = 3;
@@ -61,7 +61,11 @@ impl Engine {
                     _ => panic!("wtf variation")
                 };
 
-                for channel in 0..state.variation_a.len() {
+                let num_variations = state.variation_a.len();
+
+                std::mem::drop(state);
+
+                for (channel, _) in variation.iter().enumerate().take(num_variations) {
                     if variation[channel][bar] == 1 {
                         sound.play(channel);
                     }
@@ -73,7 +77,6 @@ impl Engine {
                 if bar == 16 {
                     bar = 0;
                 }
-
 
                 thread::sleep(time::Duration::from_millis(200));
             }

@@ -38,9 +38,12 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [],
+      "resources": ["audio/"],
       "shortDescription": "",
       "targets": "all",
+      "appimage": {
+        "bundleMediaFramework": true
+      },
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
