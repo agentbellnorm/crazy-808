@@ -43,6 +43,7 @@ fn main() {
         .setup(|app| {
             let handle = app.handle();
             engine.onBeat(move || {
+                 println!("on beat!!");
                  handle.emit_all("event-name", Payload { message: "Tauri is awesome!".into() }).unwrap()});
             Ok(())
         })

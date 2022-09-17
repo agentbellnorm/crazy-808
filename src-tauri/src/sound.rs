@@ -1,7 +1,5 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::time::Duration;
-use std::sync::Arc;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, source::{Buffered, Source}};
 
 type SoundSource = Buffered<Decoder<BufReader<File>>>;
@@ -11,9 +9,9 @@ fn source(sound_file_string_path: &str) -> SoundSource {
     Decoder::new(file).unwrap().buffered()
 }
 
-pub const HIHAT: usize = 0;
-pub const SNARE: usize = 1;
-pub const BASE_DRUM: usize = 2;
+// pub const HIHAT: usize = 0;
+// pub const SNARE: usize = 1;
+// pub const BASE_DRUM: usize = 2;
 
 struct Sources {
     sd: SoundSource,
@@ -39,14 +37,6 @@ impl Sound {
                 ch: source("audio/CH/CH.WAV"),
             }
         }
-    }
-
-    pub fn play_snare(&self) {
-        self.stream_handle.play_raw(self.sources.sd.clone().convert_samples()).unwrap();
-    
-    }
-    pub fn play_base_drum(&self) {
-        self.stream_handle.play_raw(self.sources.bd.clone().convert_samples()).unwrap();
     }
 
     fn play_source(&self, sound_source: &SoundSource) {

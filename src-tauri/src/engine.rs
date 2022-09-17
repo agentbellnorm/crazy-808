@@ -1,5 +1,4 @@
-use std::{thread, time, sync::{Arc, Mutex, mpsc}};
-use std::ops::DerefMut;
+use std::{thread, time, sync::{Arc, Mutex, mpsc::{self, Sender, Receiver}}};
 use crate::sound::Sound;
 
 const NUMBER_OF_CHANNELS: usize = 3;
@@ -28,26 +27,32 @@ impl Default for MachineState {
     }
 }
 
-pub struct Engine<'a> {
+pub struct Engine {
     state: Arc<Mutex<MachineState>>,
-    beat_callback: Option<Arc<Mutex<dyn FnMut() + 'a + Sync + Send>>>,
+    beat_callback: Option<Arc<Mutex<dyn FnMut() + 'static + Sync + Send>>>,
+    sender: Sender<usize>,
+    receiver: Arc<Mutex<Receiver<usize>>>,
 }
 
-impl<'a> Engine<'a> {
+impl Engine {
     pub fn new(state: Arc<Mutex<MachineState>>) -> Self {
+        let (sender, receiver) = mpsc::channel();
         Engine {
             state,
             beat_callback: None,
+            sender,
+            receiver: Arc::new(Mutex::new(receiver)),
         }
     }
 
-    pub fn onBeat(mut self, callback: impl FnMut() + 'a + Sync + Send) {
+    pub fn onBeat(mut self, callback: impl FnMut() + 'static + Sync + Send) {
         self.beat_callback = Some(Arc::new(Mutex::new(callback)));
     }
 
     pub fn run(&self) {
         let state_arc = self.state.clone();
-        let (tx, rx) = mpsc::channel();
+
+        let sender_2 = self.sender.clone();
 
         thread::spawn(move || {
             let sound = Sound::new();
@@ -60,22 +65,33 @@ impl<'a> Engine<'a> {
                         sound.play(channel);
                     }
                 }
-                
+                println!("sending!!");
+                match sender_2.send(bar) {
+                    Err(m) => println!("Åh nej!: {}", m),
+                    _ => (),
+                }
+
                 bar += 1;
                 if bar == 16 {
                     bar = 0;
                 }
 
-                tx.send(()).unwrap();
 
                 thread::sleep(time::Duration::from_millis(200));
             }
         });
 
-        for _ in rx {
-            if let Some(c) = &self.beat_callback {
-                c.lock().unwrap()();
-            }
+        println!("starting receiver thread!");
+        if let Some(c) = &self.beat_callback {
+            let cb = c.clone();
+            let receiver2 = self.receiver.clone();
+            thread::spawn(move || {
+                let rcv = receiver2.lock().unwrap();
+                for _ in rcv.try_recv() {
+                    println!("receiving on receiver!");
+                    cb.lock().unwrap()();  
+                }
+            });
         }
     }
 }
