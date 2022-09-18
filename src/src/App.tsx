@@ -11,6 +11,11 @@ const { invoke } = window.__TAURI__.tauri;
 //     greetMsgEl.textContent = await invoke("greet", {name: greetInputEl.value});
 // }
 //
+
+const tauriEvent = (eventName: string, data = '') => {
+  invoke('handle_event', { eventName, data });
+};
+
 function App({ store }: { store: Store }) {
   const [greeting, setGreeting] = useState<string>('sd');
   const [greetingBack, setGreetingBack] = useState<string>('');
@@ -42,6 +47,7 @@ function App({ store }: { store: Store }) {
               key={`indicator-${i}`}
               style={{
                 backgroundColor: i === Number(store.beat) ? 'green' : 'red',
+                opacity: i === Number(store.beat) ? 1.0 : 0.0,
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
@@ -51,17 +57,15 @@ function App({ store }: { store: Store }) {
         </div>
         <div>{store.beat}</div>
         <select
-          onChange={(e) =>
-            invoke('handle_event', {
-              eventName: 'variation-changed',
-              data: e.target.value,
-            })
-          }
+          onChange={(e) => tauriEvent('variation-changed', e.target.value)}
         >
           <option value="a">A</option>
-          <option value="ab">AB</option>
+          <option value="ab" disabled>
+            AB
+          </option>
           <option value="b">B</option>
         </select>
+        <button onClick={() => tauriEvent('start-stop')}>Start / Stop</button>
       </header>
     </div>
   );

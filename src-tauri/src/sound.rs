@@ -18,6 +18,25 @@ struct Sources {
     bd: SoundSource,
     ch: SoundSource,
 }
+impl Sources {
+    pub fn get_by_short(&self, st: &str) -> &SoundSource {
+        match st {
+            "sd" => &self.sd,
+            "bd" => &self.bd,
+            "ch" => &self.ch,
+            _ => panic!("no soundsource defined for instrument {}", st)
+        }
+    }
+
+    pub fn get_by_id(&self, id: usize) -> &SoundSource {
+        match id {
+            1 => &self.bd,
+            2 => &self.sd,
+            3 => &self.ch,
+            _ => panic!("no such channel: {}", id)
+        }
+    }
+}
 
 pub struct Sound {
     stream_handle: OutputStreamHandle,
@@ -44,12 +63,7 @@ impl Sound {
     }
 
     pub fn play(&self, channel: usize) {
-        let sound_source = match channel {
-            0 => &self.sources.ch,
-            1 => &self.sources.bd,
-            2 => &self.sources.sd,
-            _ => panic!("no such channel: {}", channel)
-        };
+        let sound_source  = self.sources.get_by_id(channel);
 
         self.play_source(sound_source);
     }

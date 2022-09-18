@@ -7,6 +7,7 @@ mod sound;
 mod engine;
 
 use std::sync::{Mutex, Arc};
+use serde_json::to_string;
 use tauri::{State, Manager};
 use engine::Engine;
 use crate::engine::MachineState;
@@ -26,28 +27,37 @@ fn handle_event(event_name: &str, data: &str, state: State<'_, Roland808>) {
 
     println!("received event: {} with data: {}", event_name, data);
 
+    let mut state_handle = state.0.lock().unwrap();
+
     match event_name {
         "variation-changed" => {
-            state.0.lock().unwrap().current_variation = data.to_string();
+            state_handle.current_variation = data.to_string();
         },
-        _ => panic!("what event!")
+        "start-stop" => {
+            state_handle.playing = !state_handle.playing;
+        }
+        _ => panic!("what event! {}", event_name)
     }
 }
 
 fn main() {
     let shared_state = Arc::new(Mutex::new(MachineState::default()));
-    let (engine_output_sender, engine_output_receiving) = std::sync::mpsc::channel();
+    let (engine_output_sender, engine_output_receiver) = std::sync::mpsc::channel();
 
     let engine = Engine::new(shared_state.clone(), engine_output_sender);
     engine.run();
+
+    let state_arc = shared_state.clone();
     
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle();
             std::thread::spawn(move || {
                 loop {
-                    if let Ok(output) = engine_output_receiving.recv() {
-                        rs2js(output, &app_handle);
+                    if engine_output_receiver.recv().is_ok() {
+                        let raw = &*state_arc.lock().unwrap();
+                        let serialized = to_string(raw).unwrap();
+                        rs2js(serialized, &app_handle);
                     }
                 }
             });
@@ -60,7 +70,7 @@ fn main() {
 }
 
 // A function that sends a message from Rust to JavaScript via a Tauri Event
-fn rs2js<R: tauri::Runtime>(message: usize, manager: &impl Manager<R>) {
+fn rs2js<R: tauri::Runtime>(message: String, manager: &impl Manager<R>) {
     manager
         .emit_all("rs2js", message)
         .unwrap();
