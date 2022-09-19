@@ -1,4 +1,4 @@
-[ ] Toggle playing/not playing
+[x] Toggle playing/not playing
 [ ] Program instruments
 [ ] Enable A/B
 [ ] Add all instruments
