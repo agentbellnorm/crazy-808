@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package crazy.state;
+
+message State {
+  bool playing = 1;
+  string selected_instrument = 2;
+  int32 bar = 4;
+  string current_variation = 5;
+  Variation variation_a = 6;
+  Variation variation_b = 7;
+}
+
+message Bar { repeated int32 bar = 8;}
+
+message Variation {
+  repeated Bar instrument = 9;
+}

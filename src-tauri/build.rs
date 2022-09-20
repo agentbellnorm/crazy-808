@@ -1,3 +1,6 @@
+extern crate prost_build;
+
 fn main() {
-  tauri_build::build()
+    prost_build::compile_protos(&["src/state.proto"], &["src"]).unwrap();
+    tauri_build::build()
 }

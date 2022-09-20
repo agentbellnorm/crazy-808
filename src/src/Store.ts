@@ -1,20 +1,27 @@
 import { makeAutoObservable, action } from 'mobx';
 
 import { listen } from '@tauri-apps/api/event';
+import { State } from './generated/src-tauri/src/state';
+
+// @ts-ignore
+const { invoke } = window.__TAURI__.tauri;
 
 class Store {
-  beat?: string = undefined;
+  state?: State;
   constructor() {
     makeAutoObservable(this);
 
-    listen<{ bar: number }>(
+    listen<Uint8Array>(
       'rs2js',
       action((e) => {
-        //@ts-ignore
-        const state = JSON.parse(e.payload);
-        this.beat = state.bar.toString();
+        console.log(e);
+        this.state = State.deserialize(e.payload);
       })
     );
+  }
+
+  event(eventName: string, data = '') {
+    invoke('handle_event', { eventName, data });
   }
 }
 

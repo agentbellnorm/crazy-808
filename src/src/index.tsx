@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import Store from './Store';
+import { StoreProvider } from './StoreContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -11,7 +12,9 @@ const root = ReactDOM.createRoot(
 const store = new Store();
 root.render(
   <React.StrictMode>
-    <App store={store}/>
+    <StoreProvider value={store}>
+      <App/>
+    </StoreProvider>
   </React.StrictMode>
 );
 

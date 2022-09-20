@@ -1,53 +1,22 @@
-import React, { useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import Store from './Store';
 import { observer } from 'mobx-react-lite';
+import { useStore } from './StoreContext';
+import InstrumentSelect from './Component/InstrumentSelect';
 
-// @ts-ignore
-const { invoke } = window.__TAURI__.tauri;
-// async function greet() {
-//     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-//     greetMsgEl.textContent = await invoke("greet", {name: greetInputEl.value});
-// }
-//
-
-const tauriEvent = (eventName: string, data = '') => {
-  invoke('handle_event', { eventName, data });
-};
-
-function App({ store }: { store: Store }) {
-  const [greeting, setGreeting] = useState<string>('sd');
-  const [greetingBack, setGreetingBack] = useState<string>('');
+function App() {
+  const store = useStore();
+  const bar = store.state?.bar ?? 0;
   return (
     <div className="App">
       <header className="App-header">
-        <div>
-          <input
-            id="greet-input"
-            value={greeting}
-            onChange={(e) => setGreeting(e.target.value)}
-            placeholder="Enter a name..."
-          />
-          <button
-            type="button"
-            onClick={() => {
-              invoke('handle_event', {
-                eventName: 'set_drum',
-                data: greeting,
-              }).then(setGreetingBack);
-            }}
-          >
-            Greet
-          </button>
-        </div>
+        <InstrumentSelect />
         <div style={{ display: 'flex' }}>
           {[...Array(16).keys()].map((i) => (
             <div
               key={`indicator-${i}`}
               style={{
-                backgroundColor: i === Number(store.beat) ? 'green' : 'red',
-                opacity: i === Number(store.beat) ? 1.0 : 0.0,
+                backgroundColor: i === Number(bar) ? 'green' : 'red',
+                opacity: i === Number(bar) ? 1.0 : 0.0,
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
@@ -55,9 +24,9 @@ function App({ store }: { store: Store }) {
             ></div>
           ))}
         </div>
-        <div>{store.beat}</div>
+        <div>{bar}</div>
         <select
-          onChange={(e) => tauriEvent('variation-changed', e.target.value)}
+          onChange={(e) => store.event('variation-changed', e.target.value)}
         >
           <option value="a">A</option>
           <option value="ab" disabled>
@@ -65,7 +34,7 @@ function App({ store }: { store: Store }) {
           </option>
           <option value="b">B</option>
         </select>
-        <button onClick={() => tauriEvent('start-stop')}>Start / Stop</button>
+        <button onClick={() => store.event('start-stop')}>Start / Stop</button>
       </header>
     </div>
   );

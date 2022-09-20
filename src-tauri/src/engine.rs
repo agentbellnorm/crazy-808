@@ -1,64 +1,74 @@
-use std::{thread, time, sync::{Arc, Mutex, mpsc::Sender}};
-use serde::{Serialize, Deserialize};
-use crate::sound::{Sound};
+use crate::sound::Sound;
+use crate::state::{Bar, State, Variation};
+use std::{
+    sync::{mpsc::Sender, Arc, Mutex},
+    thread, time,
+};
 
 const NUMBER_OF_CHANNELS: usize = 17;
+const NUMBER_OF_BARS: usize = 16;
 
-type Variation = [[u8; 16]; NUMBER_OF_CHANNELS];
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MachineState {
-    pub variation_a: Variation,
-    pub variation_b: Variation,
-    pub playing: bool,
-    pub bar: usize,
-    pub current_variation: String,
-}
-
-impl Default for MachineState {
-    fn default() -> Self {
-        MachineState {
+impl State {
+    pub fn initial() -> Self {
+        State {
             current_variation: "a".to_string(),
-            variation_a: [
-                [0; 16],
-                [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
-            ],
-            variation_b: [
-                [0; 16],
-                [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [0; 16],
-                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
-            ],
+            variation_a: Some(Variation {
+                instrument: vec![
+                    Bar { bar: vec![0; 16] },
+                    Bar {
+                        bar: vec![1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                    },
+                    Bar {
+                        bar: vec![0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar {
+                        bar: vec![1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                    },
+                ],
+            }),
+            variation_b: Some(Variation {
+                instrument: vec![
+                    Bar { bar: vec![0; 16] },
+                    Bar {
+                        bar: vec![1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                    },
+                    Bar {
+                        bar: vec![0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1],
+                    },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar { bar: vec![0; 16] },
+                    Bar {
+                        bar: vec![1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                    },
+                ],
+            }),
             playing: false,
             bar: 0,
+            selected_instrument: "bd".to_string(),
         }
     }
 }
@@ -66,16 +76,13 @@ impl Default for MachineState {
 pub type SenderMessage = Result<(), String>;
 
 pub struct Engine {
-    state: Arc<Mutex<MachineState>>,
+    state: Arc<Mutex<State>>,
     sender: Sender<SenderMessage>,
 }
 
 impl Engine {
-    pub fn new(state: Arc<Mutex<MachineState>>, sender: Sender<SenderMessage>) -> Self {
-        Engine {
-            state,
-            sender,
-        }
+    pub fn new(state: Arc<Mutex<State>>, sender: Sender<SenderMessage>) -> Self {
+        Engine { state, sender }
     }
 
     pub fn run(&self) {
@@ -83,7 +90,7 @@ impl Engine {
 
         let sender_2 = self.sender.clone();
 
-        thread::spawn( move || {
+        thread::spawn(move || {
             let sound = Sound::new();
             loop {
                 let mut state = state_arc.lock().unwrap();
@@ -92,7 +99,7 @@ impl Engine {
                     std::mem::drop(state);
                     thread::sleep(time::Duration::from_millis(150));
                     continue;
-                }   
+                }
 
                 let current_bar = state.bar;
                 state.bar += 1;
@@ -101,22 +108,29 @@ impl Engine {
                 }
 
                 let variation = match state.current_variation.as_str() {
-                    "a" => state.variation_a,
-                    "b" => state.variation_b,
-                    _ => panic!("wtf variation")
+                    "a" => state.variation_a.clone().unwrap(),
+                    "b" => state.variation_b.clone().unwrap(),
+                    _ => panic!("wtf variation"),
                 };
-
-                let num_bars = state.variation_a.len();
 
                 // drop the lock here, otherwise it will not be kept until after the sleep, blocking other threads.
                 std::mem::drop(state);
 
-                sender_2.send(Ok(())).unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
+                sender_2
+                    .send(Ok(()))
+                    .unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
 
-
-
-                for (channel, _) in variation.iter().enumerate().take(num_bars) {
-                    if variation[channel][current_bar] == 1 {
+                for channel in 0..17 {
+                    if variation
+                        .instrument
+                        .get(channel)
+                        .unwrap()
+                        .bar
+                        .get(current_bar as usize)
+                        .unwrap()
+                        .clone()
+                        == 1
+                    {
                         sound.play(channel);
                     }
                 }
@@ -126,4 +140,3 @@ impl Engine {
         });
     }
 }
-
