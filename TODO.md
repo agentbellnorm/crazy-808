@@ -1,6 +1,7 @@
 [x] Toggle playing/not playing
 [x] Add all instruments
 [x] Program instruments
+[ ] Enable Accent
 [ ] Enable A/B
 [ ] Enable change tempo
 [ ] Realistic gui
