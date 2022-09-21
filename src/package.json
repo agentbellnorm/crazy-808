@@ -26,6 +26,9 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
+    "ignorePatterns": [
+      "src/generated/*"
+    ],
     "extends": [
       "react-app",
       "react-app/jest"

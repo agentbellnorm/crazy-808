@@ -1,27 +1,69 @@
 import { makeAutoObservable, action } from 'mobx';
-
 import { listen } from '@tauri-apps/api/event';
-import { State } from './generated/src-tauri/src/state';
+import { invoke } from '@tauri-apps/api';
+import { Bar, State, Variation } from './generated/src-tauri/src/state';
 
-// @ts-ignore
-const { invoke } = window.__TAURI__.tauri;
+// type Variation = 'a' | 'ab' | 'b';
+const defaultBar: Bar = Bar.fromObject({
+  bar: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+});
+const defaultVariation: Variation = Variation.fromObject({
+  instrument: Array(17).fill(defaultBar),
+});
+
+const initialState: State = State.fromObject({
+  playing: false,
+  current_variation: 'a',
+  variation_a: defaultVariation,
+  variation_b: defaultVariation,
+  bar: 0,
+  selected_instrument: 1,
+});
 
 class Store {
-  state?: State;
+  state: State = initialState;
   constructor() {
     makeAutoObservable(this);
 
     listen<Uint8Array>(
       'rs2js',
       action((e) => {
-        console.log(e);
-        this.state = State.deserialize(e.payload);
+        try {
+          console.log('event');
+
+          this.state = State.deserialize(e.payload);
+        } catch (err) {
+          console.warn(err);
+        }
       })
     );
+
+    setTimeout(() => this.event('get-state'), 0);
   }
 
   event(eventName: string, data = '') {
     invoke('handle_event', { eventName, data });
+  }
+
+  get selectedInstrumentBars(): number[] {
+    return this.currentVariation[this.state.selected_instrument].bar;
+  }
+
+  get currentVariation(): Bar[] {
+    switch (this.state.current_variation) {
+      case 'a':
+        return this.state.variation_a.instrument;
+      case 'ab':
+        throw new Error('ab variation not implemented');
+      case 'b':
+        return this.state.variation_b.instrument;
+      default:
+        throw new Error(`What variation: ${this.state.current_variation}`);
+    }
+  }
+
+  get bar(): number {
+    return this.state.bar;
   }
 }
 

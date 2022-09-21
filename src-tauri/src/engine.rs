@@ -68,7 +68,7 @@ impl State {
             }),
             playing: false,
             bar: 0,
-            selected_instrument: "bd".to_string(),
+            selected_instrument: 1,
         }
     }
 }

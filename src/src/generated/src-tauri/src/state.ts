@@ -8,7 +8,7 @@ export class State extends pb_1.Message {
     #one_of_decls: number[][] = [];
     constructor(data?: any[] | {
         playing?: boolean;
-        selected_instrument?: string;
+        selected_instrument?: number;
         bar?: number;
         current_variation?: string;
         variation_a?: Variation;
@@ -44,9 +44,9 @@ export class State extends pb_1.Message {
         pb_1.Message.setField(this, 1, value);
     }
     get selected_instrument() {
-        return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+        return pb_1.Message.getFieldWithDefault(this, 2, 0) as number;
     }
-    set selected_instrument(value: string) {
+    set selected_instrument(value: number) {
         pb_1.Message.setField(this, 2, value);
     }
     get bar() {
@@ -81,7 +81,7 @@ export class State extends pb_1.Message {
     }
     static fromObject(data: {
         playing?: boolean;
-        selected_instrument?: string;
+        selected_instrument?: number;
         bar?: number;
         current_variation?: string;
         variation_a?: ReturnType<typeof Variation.prototype.toObject>;
@@ -111,7 +111,7 @@ export class State extends pb_1.Message {
     toObject() {
         const data: {
             playing?: boolean;
-            selected_instrument?: string;
+            selected_instrument?: number;
             bar?: number;
             current_variation?: string;
             variation_a?: ReturnType<typeof Variation.prototype.toObject>;
@@ -143,8 +143,8 @@ export class State extends pb_1.Message {
         const writer = w || new pb_1.BinaryWriter();
         if (this.playing != false)
             writer.writeBool(1, this.playing);
-        if (this.selected_instrument.length)
-            writer.writeString(2, this.selected_instrument);
+        if (this.selected_instrument != 0)
+            writer.writeInt32(2, this.selected_instrument);
         if (this.bar != 0)
             writer.writeInt32(4, this.bar);
         if (this.current_variation.length)
@@ -166,7 +166,7 @@ export class State extends pb_1.Message {
                     message.playing = reader.readBool();
                     break;
                 case 2:
-                    message.selected_instrument = reader.readString();
+                    message.selected_instrument = reader.readInt32();
                     break;
                 case 4:
                     message.bar = reader.readInt32();

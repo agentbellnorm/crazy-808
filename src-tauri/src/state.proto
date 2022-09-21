@@ -4,7 +4,7 @@ package crazy.state;
 
 message State {
   bool playing = 1;
-  string selected_instrument = 2;
+  int32 selected_instrument = 2;
   int32 bar = 4;
   string current_variation = 5;
   Variation variation_a = 6;

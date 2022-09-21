@@ -12,12 +12,12 @@ pub mod state {
 }
 
 use engine::Engine;
+use prost::Message;
 use serde_json::to_string;
 use state::State;
+use std::io::Cursor;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, State as tState};
-use std::io::Cursor;
-use prost::Message;
 
 #[derive(Default)]
 pub struct Roland808(Arc<Mutex<State>>);
@@ -29,7 +29,12 @@ struct Payload {
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn handle_event(event_name: &str, data: &str, state: tState<'_, Roland808>) {
+fn handle_event(
+    event_name: &str,
+    data: &str,
+    state: tState<'_, Roland808>,
+    app_handle: tauri::AppHandle,
+) {
     println!("received event: {} with data: {}", event_name, data);
 
     let mut state_handle = state.0.lock().unwrap();
@@ -42,10 +47,25 @@ fn handle_event(event_name: &str, data: &str, state: tState<'_, Roland808>) {
             state_handle.playing = !state_handle.playing;
         }
         "instrument-selected" => {
-            state_handle.selected_instrument = data.to_string();
+            state_handle.selected_instrument = data.parse().unwrap();
         }
+        "channel-pressed" => {
+            let channel: i32 = data.parse().unwrap();
+            let selected_instrument = state_handle.selected_instrument;
+            state_handle
+                .variation_a
+                .as_mut()
+                .unwrap()
+                .instrument
+                .get_mut(selected_instrument as usize)
+                .unwrap()
+                .bar[channel as usize] ^= 1; // flip between 0 and 1
+        }
+        "get-state" => (), // dont do anything, just let the state be published
         _ => panic!("what event! {}", event_name),
     }
+
+    rs2js(serialize_state(&state_handle), &app_handle);
 }
 
 fn main() {
@@ -60,6 +80,7 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
+            rs2js(serialize_state(&State::initial()), &app.handle());
             let app_handle = app.handle();
             std::thread::spawn(move || loop {
                 if engine_output_receiver.recv().is_ok() {
@@ -68,6 +89,7 @@ fn main() {
                     rs2js(serialized, &app_handle);
                 }
             });
+
             Ok(())
         })
         .manage(Roland808(shared_state))
