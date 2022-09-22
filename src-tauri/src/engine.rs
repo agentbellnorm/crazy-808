@@ -1,7 +1,7 @@
 use crate::sound::Sound;
 use crate::state::{Bar, State, Variation};
 use std::{
-    sync::{mpsc::Sender, Arc, Mutex},
+    sync::{mpsc::SyncSender, Arc, Mutex},
     thread, time,
 };
 
@@ -66,7 +66,7 @@ impl State {
                     },
                 ],
             }),
-            playing: false,
+            playing: true,
             bar: 0,
             selected_instrument: 1,
         }
@@ -75,13 +75,17 @@ impl State {
 
 pub type SenderMessage = Result<(), String>;
 
+// fn s(st: ) -> String {
+//     st.to_string()
+// }
+
 pub struct Engine {
     state: Arc<Mutex<State>>,
-    sender: Sender<SenderMessage>,
+    sender: SyncSender<SenderMessage>,
 }
 
 impl Engine {
-    pub fn new(state: Arc<Mutex<State>>, sender: Sender<SenderMessage>) -> Self {
+    pub fn new(state: Arc<Mutex<State>>, sender: SyncSender<SenderMessage>) -> Self {
         Engine { state, sender }
     }
 
@@ -138,5 +142,36 @@ impl Engine {
                 thread::sleep(time::Duration::from_millis(200));
             }
         });
+    }
+
+    pub fn set_variation(&self, variation: String) {
+        let mut state = self.state.lock().unwrap();
+        state.current_variation = variation;
+    }
+
+    pub fn toggle_playing(&self) {
+        let mut state = self.state.lock().unwrap();
+        state.playing ^= true;
+    }
+
+    pub fn set_selected_instrument(&self, instrument: i32) {
+        let mut state = self.state.lock().unwrap();
+        state.selected_instrument = instrument;
+    }
+
+    pub fn toggle_channel(&self, channel: i32) {
+        let mut state = self.state.lock().unwrap();
+        let selected_instrument = state.selected_instrument;
+        let variation = match state.current_variation.as_str() {
+            "a" => state.variation_a.as_mut().unwrap(),
+            "b" => state.variation_b.as_mut().unwrap(),
+            _ => panic!("variation must be a or b")
+        };
+
+        variation
+            .instrument
+            .get_mut(selected_instrument as usize)
+            .unwrap()
+            .bar[channel as usize] ^= 1; // toggle between 0 and 1
     }
 }

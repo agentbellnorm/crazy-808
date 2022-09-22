@@ -33,45 +33,36 @@ fn handle_event(
     event_name: &str,
     data: &str,
     state: tState<'_, Roland808>,
+    engine: tState<'_, Engine>,
     app_handle: tauri::AppHandle,
 ) {
     println!("received event: {} with data: {}", event_name, data);
 
-    let mut state_handle = state.0.lock().unwrap();
-
     match event_name {
         "variation-changed" => {
-            state_handle.current_variation = data.to_string();
+            engine.set_variation(data.to_string());
         }
         "start-stop" => {
-            state_handle.playing = !state_handle.playing;
+            engine.toggle_playing();
         }
         "instrument-selected" => {
-            state_handle.selected_instrument = data.parse().unwrap();
+            engine.set_selected_instrument(data.parse().unwrap());
         }
         "channel-pressed" => {
-            let channel: i32 = data.parse().unwrap();
-            let selected_instrument = state_handle.selected_instrument;
-            state_handle
-                .variation_a
-                .as_mut()
-                .unwrap()
-                .instrument
-                .get_mut(selected_instrument as usize)
-                .unwrap()
-                .bar[channel as usize] ^= 1; // flip between 0 and 1
+            engine.toggle_channel(data.parse().unwrap());
         }
         "get-state" => (), // dont do anything, just let the state be published
         _ => panic!("what event! {}", event_name),
     }
 
+    let state_handle = state.0.lock().unwrap();
     rs2js(serialize_state(&state_handle), &app_handle);
 }
 
 fn main() {
     println!("{}", env!("OUT_DIR").to_string());
     let shared_state = Arc::new(Mutex::new(State::initial()));
-    let (engine_output_sender, engine_output_receiver) = std::sync::mpsc::channel();
+    let (engine_output_sender, engine_output_receiver) = std::sync::mpsc::sync_channel(1);
 
     let engine = Engine::new(shared_state.clone(), engine_output_sender);
     engine.run();
@@ -92,6 +83,7 @@ fn main() {
 
             Ok(())
         })
+        .manage(engine)
         .manage(Roland808(shared_state))
         .invoke_handler(tauri::generate_handler![handle_event])
         .run(tauri::generate_context!())
