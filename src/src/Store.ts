@@ -54,7 +54,9 @@ class Store {
       case 'a':
         return this.state.variation_a.instrument;
       case 'ab':
-        throw new Error('ab variation not implemented');
+        return this.bar < 16
+          ? this.state.variation_a.instrument
+          : this.state.variation_b.instrument;
       case 'b':
         return this.state.variation_b.instrument;
       default:
@@ -63,7 +65,7 @@ class Store {
   }
 
   get bar(): number {
-    return this.state.bar;
+    return this.state.bar % (this.state.current_variation === 'ab' ? 32 : 16);
   }
 }
 

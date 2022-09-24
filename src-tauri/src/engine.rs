@@ -11,7 +11,7 @@ const NUMBER_OF_BARS: usize = 16;
 impl State {
     pub fn initial() -> Self {
         State {
-            current_variation: "a".to_string(),
+            current_variation: "ab".to_string(),
             variation_a: Some(Variation {
                 instrument: vec![
                     Bar { bar: vec![0; 16] },
@@ -101,23 +101,29 @@ impl Engine {
 
                 if !state.playing {
                     std::mem::drop(state);
-                    thread::sleep(time::Duration::from_millis(150));
+                    thread::sleep(time::Duration::from_millis(100));
                     continue;
                 }
 
-                let current_bar = state.bar;
                 state.bar += 1;
-                if state.bar == 16 {
-                    state.bar = 0;
-                }
+
+                let current_bar = state.bar
+                    % match state.current_variation.as_str() {
+                        "ab" => 32,
+                        _ => 16,
+                    };
 
                 let variation = match state.current_variation.as_str() {
                     "a" => state.variation_a.clone().unwrap(),
                     "b" => state.variation_b.clone().unwrap(),
-                    _ => panic!("wtf variation"),
+                    "ab" => match current_bar < 16 {
+                        true => state.variation_a.clone().unwrap(),
+                        false => state.variation_b.clone().unwrap(),
+                    },
+                    _ => panic!("wtf variation: {}", state.current_variation),
                 };
 
-                // drop the lock here, otherwise it will not be kept until after the sleep, blocking other threads.
+                // drop the lock here, otherwise it will be kept until after the sleep, blocking other threads.
                 std::mem::drop(state);
 
                 sender_2
@@ -130,7 +136,7 @@ impl Engine {
                         .get(channel)
                         .unwrap()
                         .bar
-                        .get(current_bar as usize)
+                        .get(current_bar as usize % 16)
                         .unwrap()
                         .clone()
                         == 1
@@ -165,7 +171,7 @@ impl Engine {
         let variation = match state.current_variation.as_str() {
             "a" => state.variation_a.as_mut().unwrap(),
             "b" => state.variation_b.as_mut().unwrap(),
-            _ => panic!("variation must be a or b")
+            _ => panic!("variation must be a or b"),
         };
 
         variation

@@ -15,6 +15,7 @@ const getColor = (bar: number, active: number, currentBar: number) => {
 
 const ChannelButtons = () => {
   const store = useStore();
+  const barToDisplay = store.bar % 16;
   return (
     <div
       style={{ display: 'flex', justifyContent: 'space-between', width: '60%' }}
@@ -33,7 +34,7 @@ const ChannelButtons = () => {
             style={{
               width: '20px',
               height: '20px',
-              backgroundColor: getColor(index, channel, store.bar),
+              backgroundColor: getColor(index, channel, barToDisplay),
             }}
           ></div>
           <button

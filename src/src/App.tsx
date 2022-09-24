@@ -1,28 +1,18 @@
 import './App.css';
 import { observer } from 'mobx-react-lite';
-import { useStore } from './StoreContext';
 import InstrumentSelect from './Component/InstrumentSelect';
 import ChannelButtons from './Component/ChannelButtons';
+import VariationSelector from './Component/VariationSelector';
+import StartStoppButton from './Component/StartStoppButton';
 
 function App() {
-  const store = useStore();
   return (
     <div className="App">
       <header className="App-header">
         <InstrumentSelect />
-        <select
-          onChange={(e) => store.event('variation-changed', e.target.value)}
-        >
-          <option value="a">A</option>
-          <option value="ab" disabled>
-            AB
-          </option>
-          <option value="b">B</option>
-        </select>
+        <VariationSelector />
         <ChannelButtons />
-        <button onMouseDown={() => store.event('start-stop')}>
-          Start / Stop
-        </button>
+        <StartStoppButton />
       </header>
     </div>
   );
