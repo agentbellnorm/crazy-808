@@ -5,8 +5,8 @@ use std::{
     thread, time,
 };
 
-const NUMBER_OF_CHANNELS: usize = 17;
-const NUMBER_OF_BARS: usize = 16;
+const NUMBER_OF_CHANNELS: i32 = 17;
+const NUMBER_OF_BARS: i32 = 16;
 
 impl State {
     pub fn initial() -> Self {
@@ -109,14 +109,14 @@ impl Engine {
 
                 let current_bar = state.bar
                     % match state.current_variation.as_str() {
-                        "ab" => 32,
-                        _ => 16,
+                        "ab" => NUMBER_OF_BARS * 2,
+                        _ => NUMBER_OF_BARS,
                     };
 
                 let variation = match state.current_variation.as_str() {
                     "a" => state.variation_a.clone().unwrap(),
                     "b" => state.variation_b.clone().unwrap(),
-                    "ab" => match current_bar < 16 {
+                    "ab" => match current_bar < NUMBER_OF_BARS {
                         true => state.variation_a.clone().unwrap(),
                         false => state.variation_b.clone().unwrap(),
                     },
@@ -130,18 +130,18 @@ impl Engine {
                     .send(Ok(()))
                     .unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
 
-                for channel in 0..17 {
+                for channel in 0..NUMBER_OF_CHANNELS {
                     if variation
                         .instrument
-                        .get(channel)
+                        .get(channel as usize)
                         .unwrap()
                         .bar
-                        .get(current_bar as usize % 16)
+                        .get((current_bar % NUMBER_OF_BARS) as usize)
                         .unwrap()
                         .clone()
                         == 1
                     {
-                        sound.play(channel);
+                        sound.play(channel as usize);
                     }
                 }
 
