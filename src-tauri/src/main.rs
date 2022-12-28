@@ -3,18 +3,11 @@
     windows_subsystem = "windows"
 )]
 
-mod engine;
-mod sound;
+use engine::engine::Engine;
+use engine::state::State;
 
-// generated from state.proto. Find with: find web-gui-tauri/target -name "crazy.state.rs"
-pub mod state {
-    include!(concat!(env!("OUT_DIR"), "/crazy.state.rs"));
-}
-
-use engine::Engine;
 use prost::Message;
 use serde_json::to_string;
-use state::State;
 use std::io::Cursor;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, State as tState};
@@ -60,7 +53,6 @@ fn handle_event(
 }
 
 fn main() {
-    println!("{}", env!("OUT_DIR").to_string());
     let shared_state = Arc::new(Mutex::new(State::initial()));
     let (engine_output_sender, engine_output_receiver) = std::sync::mpsc::sync_channel(1);
 

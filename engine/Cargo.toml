@@ -1,0 +1,14 @@
+[package]
+name = "engine"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+prost-build = "0.5"
+
+[dependencies]
+rodio = "0.16.0"
+prost = "0.5"
+bytes = "0.4"
