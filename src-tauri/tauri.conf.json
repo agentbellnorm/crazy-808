@@ -1,9 +1,9 @@
 {
   "build": {
-    "beforeDevCommand": "export BROWSER=none && yarn --cwd ./src start",
-    "beforeBuildCommand": "yarn --cwd ./src build",
+    "beforeDevCommand": "export BROWSER=none && yarn --cwd ./web-gui start",
+    "beforeBuildCommand": "yarn --cwd ./web-gui build",
     "devPath": "http://localhost:3000",
-    "distDir": "../src/build",
+    "distDir": "../web-gui/build",
     "withGlobalTauri": true
   },
   "package": {
