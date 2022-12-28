@@ -9,6 +9,7 @@ message State {
   string current_variation = 5;
   Variation variation_a = 6;
   Variation variation_b = 7;
+  int32 bpm = 8;
 }
 
 message Bar { repeated int32 bar = 8;}

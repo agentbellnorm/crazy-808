@@ -2,7 +2,8 @@ use crate::sound::Sound;
 use crate::state::{Bar, State, Variation};
 use std::{
     sync::{mpsc::SyncSender, Arc, Mutex},
-    thread, time,
+    thread,
+    time::{Duration, Instant},
 };
 
 const NUMBER_OF_CHANNELS: i32 = 17;
@@ -69,6 +70,7 @@ impl State {
             playing: true,
             bar: 0,
             selected_instrument: 1,
+            bpm: 100,
         }
     }
 }
@@ -94,16 +96,41 @@ impl Engine {
 
         let sender_2 = self.sender.clone();
 
+        let mut next_beat = Instant::now() + Duration::from_millis(100);
+        let mut previous_beat: Option<Instant> = None;
+
         thread::spawn(move || {
             let sound = Sound::new();
             loop {
-                let mut state = state_arc.lock().unwrap();
+                let now = Instant::now();
 
-                if !state.playing {
-                    std::mem::drop(state);
-                    thread::sleep(time::Duration::from_millis(100));
+                let until_next_beat = next_beat - now;
+                if !(until_next_beat < Duration::from_micros(500)) {
+                    thread::sleep(until_next_beat / 2);
                     continue;
                 }
+
+                let mut state = state_arc.lock().unwrap();
+                if !state.playing {
+                    drop(state);
+                    thread::sleep(Duration::from_millis(200));
+                    continue;
+                }
+
+                let loop_duration = Duration::from_millis(((1000 * 60) / (state.bpm * 2)) as u64);
+                let since_last = match previous_beat {
+                    None => loop_duration,
+                    Some(prev) => now - prev,
+                };
+
+                if loop_duration >= since_last {
+                    let ahead = loop_duration - since_last;
+                    next_beat = now + loop_duration + ahead;
+                } else {
+                    let behind = since_last - loop_duration;
+                    next_beat = now + loop_duration - behind;
+                }
+                previous_beat = Some(now);
 
                 state.bar += 1;
 
@@ -124,7 +151,7 @@ impl Engine {
                 };
 
                 // drop the lock here, otherwise it will be kept until after the sleep, blocking other threads.
-                std::mem::drop(state);
+                drop(state);
 
                 sender_2
                     .send(Ok(()))
@@ -144,8 +171,6 @@ impl Engine {
                         sound.play(channel as usize);
                     }
                 }
-
-                thread::sleep(time::Duration::from_millis(200));
             }
         });
     }

@@ -95,7 +95,7 @@ fn rs2js<R: tauri::Runtime>(message: Vec<u8>, manager: &impl Manager<R>) {
     manager.emit_all("rs2js", message).unwrap();
 }
 
-pub fn serialize_state(state: &state::State) -> Vec<u8> {
+pub fn serialize_state(state: &State) -> Vec<u8> {
     let mut buf = Vec::new();
     buf.reserve(state.encoded_len());
     // Unwrap is safe, since we have reserved sufficient capacity in the vector.
