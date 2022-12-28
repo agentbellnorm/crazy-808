@@ -70,7 +70,7 @@ impl State {
             playing: true,
             bar: 0,
             selected_instrument: 1,
-            bpm: 100,
+            bpm: 150,
         }
     }
 }
@@ -116,6 +116,8 @@ impl Engine {
                     thread::sleep(Duration::from_millis(200));
                     continue;
                 }
+
+                println!("beat!");
 
                 let loop_duration = Duration::from_millis(((1000 * 60) / (state.bpm * 2)) as u64);
                 let since_last = match previous_beat {
