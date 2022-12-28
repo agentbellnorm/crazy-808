@@ -1,5 +1,5 @@
 [package]
-name = "crazy-808"
+name = "tauri-app"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
