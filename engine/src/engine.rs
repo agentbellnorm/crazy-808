@@ -105,7 +105,7 @@ impl Engine {
                 let now = Instant::now();
 
                 let until_next_beat = next_beat - now;
-                if !(until_next_beat < Duration::from_micros(500)) {
+                if until_next_beat >= Duration::from_micros(500) {
                     thread::sleep(until_next_beat / 2);
                     continue;
                 }
@@ -158,14 +158,13 @@ impl Engine {
                     .unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
 
                 for channel in 0..NUMBER_OF_CHANNELS {
-                    if variation
+                    if *variation
                         .instrument
                         .get(channel as usize)
                         .unwrap()
                         .bar
                         .get((current_bar % NUMBER_OF_BARS) as usize)
                         .unwrap()
-                        .clone()
                         == 1
                     {
                         sound.play(channel as usize);

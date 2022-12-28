@@ -1,6 +1,9 @@
+use rodio::{
+    source::{Buffered, Source},
+    Decoder, OutputStream, OutputStreamHandle,
+};
 use std::fs::File;
 use std::io::BufReader;
-use rodio::{Decoder, OutputStream, OutputStreamHandle, source::{Buffered, Source}};
 
 type SoundSource = Buffered<Decoder<BufReader<File>>>;
 
@@ -8,10 +11,6 @@ fn source(sound_file_string_path: &str) -> SoundSource {
     let file = BufReader::new(File::open(sound_file_string_path).unwrap());
     Decoder::new(file).unwrap().buffered()
 }
-
-// pub const HIHAT: usize = 0;
-// pub const SNARE: usize = 1;
-// pub const BASE_DRUM: usize = 2;
 
 struct Sources {
     bd: SoundSource,
@@ -29,7 +28,7 @@ struct Sources {
     cb: SoundSource,
     cy: SoundSource,
     oh: SoundSource,
-    ch: SoundSource
+    ch: SoundSource,
 }
 
 impl Sources {
@@ -54,6 +53,7 @@ impl Sources {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_by_short(&self, st: &str) -> &SoundSource {
         match st {
             "bd" => &self.bd,
@@ -72,7 +72,7 @@ impl Sources {
             "cy" => &self.cy,
             "oh" => &self.oh,
             "ch" => &self.ch,
-            _ => panic!("no soundsource defined for instrument {}", st)
+            _ => panic!("no soundsource defined for instrument {}", st),
         }
     }
 
@@ -93,8 +93,8 @@ impl Sources {
             13 => &self.cb,
             14 => &self.cy,
             15 => &self.oh,
-            16 => &self.ch,               
-            _ => panic!("no such channel: {}", id)
+            16 => &self.ch,
+            _ => panic!("no such channel: {}", id),
         }
     }
 }
@@ -116,14 +116,14 @@ impl Sound {
     }
 
     fn play_source(&self, sound_source: &SoundSource) {
-        self.stream_handle.play_raw(sound_source.clone().convert_samples()).unwrap();
+        self.stream_handle
+            .play_raw(sound_source.clone().convert_samples())
+            .unwrap();
     }
 
     pub fn play(&self, channel: usize) {
-        let sound_source  = self.sources.get_by_id(channel);
+        let sound_source = self.sources.get_by_id(channel);
 
         self.play_source(sound_source);
     }
 }
-
-
