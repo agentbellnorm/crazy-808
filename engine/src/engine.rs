@@ -1,3 +1,4 @@
+use crate::core::{get_channels_to_play, get_current_bar, get_variation};
 use crate::sound::Sound;
 use crate::state::{Bar, State, Variation};
 use std::{
@@ -7,7 +8,7 @@ use std::{
 };
 
 const NUMBER_OF_CHANNELS: i32 = 17;
-const NUMBER_OF_BARS: i32 = 16;
+pub const NUMBER_OF_BARS: i32 = 16;
 
 impl State {
     pub fn initial() -> Self {
@@ -136,21 +137,7 @@ impl Engine {
 
                 state.bar += 1;
 
-                let current_bar = state.bar
-                    % match state.current_variation.as_str() {
-                        "ab" => NUMBER_OF_BARS * 2,
-                        _ => NUMBER_OF_BARS,
-                    };
-
-                let variation = match state.current_variation.as_str() {
-                    "a" => state.variation_a.clone().unwrap(),
-                    "b" => state.variation_b.clone().unwrap(),
-                    "ab" => match current_bar < NUMBER_OF_BARS {
-                        true => state.variation_a.clone().unwrap(),
-                        false => state.variation_b.clone().unwrap(),
-                    },
-                    _ => panic!("wtf variation: {}", state.current_variation),
-                };
+                let channels_to_play = get_channels_to_play(&state);
 
                 // drop the lock here, otherwise it will be kept until after the sleep, blocking other threads.
                 drop(state);
@@ -159,19 +146,9 @@ impl Engine {
                     .send(Ok(()))
                     .unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
 
-                for channel in 0..NUMBER_OF_CHANNELS {
-                    if *variation
-                        .instrument
-                        .get(channel as usize)
-                        .unwrap()
-                        .bar
-                        .get((current_bar % NUMBER_OF_BARS) as usize)
-                        .unwrap()
-                        == 1
-                    {
-                        sound.play(channel as usize);
-                    }
-                }
+                channels_to_play.into_iter().for_each(|channel| {
+                    sound.play(channel as usize);
+                });
             }
         });
     }
