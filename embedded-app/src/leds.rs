@@ -1,13 +1,14 @@
+use crate::{Bus, Expander};
 use engine::core::{get_current_bar, get_instrument};
 use engine::engine::NUMBER_OF_BARS;
 use engine::state::State;
-use linux_embedded_hal::I2cdev;
 use mcp23017::MCP23017;
+use rppal::i2c::I2c;
 
 pub const LEDS_IC2_ADDRESS: u8 = 0x20;
 
-pub struct LEDS {
-    expander: MCP23017<I2cdev>,
+pub struct Leds {
+    expander: Expander,
 }
 
 fn to16arr(vec: &Vec<i32>) -> [u16; 16] {
@@ -19,15 +20,14 @@ fn to16arr(vec: &Vec<i32>) -> [u16; 16] {
     arr
 }
 
-impl LEDS {
-    pub fn new() -> Self {
-        let device = I2cdev::new("/dev/i2c-1").expect("Could not get ic2 device");
+impl Leds {
+    pub fn new(bus: Bus) -> Self {
         let mut expander =
-            MCP23017::new(device, LEDS_IC2_ADDRESS).expect("Could not get led expander");
+            MCP23017::new(bus.acquire_i2c(), LEDS_IC2_ADDRESS).expect("Could not get led expander");
         expander.all_pin_mode(mcp23017::PinMode::OUTPUT).unwrap(); // set all pins to outputs
         expander.write_gpioab(0).unwrap(); // set all pins to 0
 
-        LEDS { expander }
+        Leds { expander }
     }
 
     pub fn all_on(&mut self) {

@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mcp23017 = "1.0.0"
-linux-embedded-hal = "0.3.2"
+mcp23017 = { git = "https://github.com/mrd0ll4r/mcp23017.git" }
 engine = { path = "../engine" }
+shared-bus = { version="0.2.5", features=["std"] }
+rppal = {version="0.14.1", features=["hal"]}
