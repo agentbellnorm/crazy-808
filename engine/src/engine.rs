@@ -13,7 +13,7 @@ pub const NUMBER_OF_BARS: i32 = 16;
 impl State {
     pub fn initial() -> Self {
         State {
-            current_variation: "ab".to_string(),
+            current_variation: "a".to_string(),
             variation_a: Some(Variation {
                 instrument: vec![
                     Bar { bar: vec![0; 16] },
@@ -117,8 +117,6 @@ impl Engine {
                     thread::sleep(Duration::from_millis(200));
                     continue;
                 }
-
-                println!("beat!");
 
                 let loop_duration = Duration::from_millis(((1000 * 60) / (state.bpm * 2)) as u64);
                 let since_last = match previous_beat {

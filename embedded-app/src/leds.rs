@@ -3,7 +3,6 @@ use engine::core::{get_current_bar, get_instrument};
 use engine::engine::NUMBER_OF_BARS;
 use engine::state::State;
 use mcp23017::MCP23017;
-use rppal::i2c::I2c;
 
 pub const LEDS_IC2_ADDRESS: u8 = 0x20;
 
