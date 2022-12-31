@@ -1,4 +1,4 @@
-use crate::core::{get_channels_to_play, get_current_bar, get_variation};
+use crate::core::{get_channels_to_play, get_current_bar, get_next_instrument, get_variation};
 use crate::sound::Sound;
 use crate::state::{Bar, State, Variation};
 use std::{
@@ -9,6 +9,12 @@ use std::{
 
 const NUMBER_OF_CHANNELS: i32 = 17;
 pub const NUMBER_OF_BARS: i32 = 16;
+
+#[derive(Debug)]
+pub enum Direction {
+    LEFT,
+    RIGHT,
+}
 
 impl State {
     pub fn initial() -> Self {
@@ -164,6 +170,15 @@ impl Engine {
     pub fn set_selected_instrument(&self, instrument: i32) {
         let mut state = self.state.lock().unwrap();
         state.selected_instrument = instrument;
+    }
+
+    pub fn move_instrument_selector(&self, direction: Direction) {
+        let mut state = self.state.lock().unwrap();
+        state.selected_instrument = get_next_instrument(&state, direction);
+    }
+
+    pub fn get_selected_instrument(&self) -> i32 {
+        self.state.lock().unwrap().selected_instrument
     }
 
     pub fn toggle_channel(&self, channel: i32) {

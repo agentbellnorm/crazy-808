@@ -3,10 +3,13 @@ extern crate mcp23017;
 extern crate shared_bus;
 
 mod buttons;
+mod instrument_select;
 mod leds;
 
 use crate::buttons::Buttons;
+use crate::instrument_select::InstrumentSelect;
 use crate::leds::Leds;
+use engine::core::get_next_instrument;
 use engine::engine::Engine;
 use engine::state::State;
 use mcp23017::MCP23017;
@@ -30,12 +33,20 @@ fn main() {
 
     let mut leds = Leds::new(bus);
     let mut buttons = Buttons::new(bus);
+    let mut instrument_select = InstrumentSelect::new(bus);
 
     thread::spawn(move || loop {
+        // works fine with 50ms
         if let Some(pressed) = buttons.read() {
             engine.toggle_channel(pressed as i32);
         }
-        thread::sleep(Duration::from_millis(50));
+
+        // seems to work best around 10ms
+        if let Some(turn) = instrument_select.read() {
+            engine.move_instrument_selector(turn);
+            println!("instrument: {}", engine.get_selected_instrument());
+        }
+        thread::sleep(Duration::from_millis(10));
     });
 
     loop {
