@@ -14,14 +14,9 @@ pub fn get_current_bar(state: &State) -> i32 {
 }
 
 pub fn get_variation(state: &State) -> &Variation {
-    let current_bar = get_current_bar(state);
-    let variation = match state.current_variation.as_str() {
+    let variation = match state.get_current_variation().as_str() {
         "a" => &state.variation_a,
         "b" => &state.variation_b,
-        "ab" => match current_bar < NUMBER_OF_BARS {
-            true => &state.variation_a,
-            false => &state.variation_b,
-        },
         _ => panic!("wtf variation: {}", state.current_variation),
     };
     match variation {

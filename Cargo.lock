@@ -737,6 +737,7 @@ dependencies = [
  "prost",
  "prost-build",
  "rodio",
+ "spin_sleep",
 ]
 
 [[package]]

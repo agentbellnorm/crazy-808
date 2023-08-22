@@ -1,10 +1,11 @@
-use crate::core::{get_channels_to_play, get_current_bar, get_next_instrument, get_variation};
+use crate::core::{get_channels_to_play, get_current_bar, get_next_instrument};
 use crate::sound::Sound;
 use crate::state::{Bar, State, Variation};
+use spin_sleep::LoopHelper;
 use std::{
     sync::{mpsc::SyncSender, Arc, Mutex},
     thread,
-    time::{Duration, Instant},
+    time::{Duration},
 };
 
 const NUMBER_OF_CHANNELS: i32 = 17;
@@ -19,7 +20,7 @@ pub enum Direction {
 impl State {
     pub fn initial() -> Self {
         State {
-            current_variation: "a".to_string(),
+            current_variation: "ab".to_string(),
             variation_a: Some(Variation {
                 instrument: vec![
                     Bar { bar: vec![0; 16] },
@@ -77,8 +78,21 @@ impl State {
             playing: true,
             bar: 0,
             selected_instrument: 1,
-            bpm: 150,
+            bpm: 94,
         }
+    }
+
+    pub fn get_current_variation(&self) -> String {
+        let current_bar = get_current_bar(self);
+        return String::from(match self.current_variation.as_str() {
+            "a" => "a",
+            "b" => "b",
+            "ab" => match current_bar < NUMBER_OF_BARS {
+                true => "a",
+                false => "b",
+            },
+            _ => panic!("wtf variation: {}", self.current_variation),
+        });
     }
 }
 
@@ -103,19 +117,14 @@ impl Engine {
 
         let sender_2 = self.sender.clone();
 
-        let mut next_beat = Instant::now() + Duration::from_millis(100);
-        let mut previous_beat: Option<Instant> = None;
+        let mut loop_helper = LoopHelper::builder()
+            .report_interval_s(0.5) // report every half a second
+            .build_with_target_rate((state_arc.lock().unwrap().bpm / 60) * 4);
 
         thread::spawn(move || {
             let sound = Sound::new();
             loop {
-                let now = Instant::now();
-
-                let until_next_beat = next_beat - now;
-                if until_next_beat >= Duration::from_micros(500) {
-                    thread::sleep(until_next_beat / 2);
-                    continue;
-                }
+                loop_helper.loop_start(); // or .loop_start_s() for f64 seconds
 
                 let mut state = state_arc.lock().unwrap();
                 if !state.playing {
@@ -123,21 +132,6 @@ impl Engine {
                     thread::sleep(Duration::from_millis(200));
                     continue;
                 }
-
-                let loop_duration = Duration::from_millis(((1000 * 60) / (state.bpm * 2)) as u64);
-                let since_last = match previous_beat {
-                    None => loop_duration,
-                    Some(prev) => now - prev,
-                };
-
-                if loop_duration >= since_last {
-                    let ahead = loop_duration - since_last;
-                    next_beat = now + loop_duration + ahead;
-                } else {
-                    let behind = since_last - loop_duration;
-                    next_beat = now + loop_duration - behind;
-                }
-                previous_beat = Some(now);
 
                 state.bar += 1;
 
@@ -149,6 +143,8 @@ impl Engine {
                 sender_2
                     .send(Ok(()))
                     .unwrap_or_else(|m| panic!("Error when sending on channel from engine: {}", m));
+
+                loop_helper.loop_sleep();
 
                 channels_to_play.into_iter().for_each(|channel| {
                     sound.play(channel as usize);
@@ -184,10 +180,11 @@ impl Engine {
     pub fn toggle_channel(&self, channel: i32) {
         let mut state = self.state.lock().unwrap();
         let selected_instrument = state.selected_instrument;
-        let variation = match state.current_variation.as_str() {
+
+        let variation = match state.get_current_variation().as_str() {
             "a" => state.variation_a.as_mut().unwrap(),
             "b" => state.variation_b.as_mut().unwrap(),
-            _ => panic!("variation must be a or b"),
+            _ => panic!("wtf variation: {}", state.current_variation),
         };
 
         variation

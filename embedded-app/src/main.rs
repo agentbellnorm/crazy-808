@@ -41,12 +41,12 @@ fn main() {
             engine.toggle_channel(pressed as i32);
         }
 
-        // seems to work best around 10ms
+        // // seems to work best around 10ms
         if let Some(turn) = instrument_select.read() {
             engine.move_instrument_selector(turn);
             println!("instrument: {}", engine.get_selected_instrument());
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(1));
     });
 
     loop {

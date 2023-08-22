@@ -15,7 +15,7 @@ readonly SOURCE_PATH=../target/${TARGET_ARCH}/debug/${PACKAGE_NAME}
 readonly SOUND_FILES=../engine/audio
 export CROSS_CONFIG=Cross.toml
 
-cross build --target ${TARGET_ARCH} --package ${PACKAGE_NAME}
+cross build --target ${TARGET_ARCH} --package ${PACKAGE_NAME} --verbose
 rsync ${SOURCE_PATH} ${TARGET_HOST}:${TARGET_PATH}/${PACKAGE_NAME}
 rsync -r ${SOUND_FILES} ${TARGET_HOST}:${TARGET_PATH}
 ssh -t ${TARGET_HOST} ${TARGET_PATH}/${PACKAGE_NAME}
