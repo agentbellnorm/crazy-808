@@ -1,41 +1,30 @@
-use crate::{Bus, Expander};
+use crate::shared_pull_up_input_expander::SharedPullUpInputExpander;
 use engine::engine::Direction;
-use mcp23017::{PinMode, MCP23017};
+use std::ops::Range;
 
 const INSTRUMENT_SELECT_IC2_ADDRESS: u8 = 0x22;
 
 pub struct InstrumentSelect {
     clk_state: bool,
-    expander: Expander,
+    shared_expander: SharedPullUpInputExpander,
+    pin_range: Range<usize>,
 }
 
 impl InstrumentSelect {
-    pub fn new(shared_ic2_bus: Bus) -> Self {
-        let mut expander =
-            MCP23017::new(shared_ic2_bus.acquire_i2c(), INSTRUMENT_SELECT_IC2_ADDRESS).unwrap();
-
-        expander.all_pin_mode(PinMode::INPUT).unwrap(); // or for all pins
-
-        for pin in 0..16 {
-            expander.pull_up(pin, true).unwrap();
-        }
-
+    pub fn new(shared_expander: SharedPullUpInputExpander, pin_range: Range<usize>) -> Self {
         InstrumentSelect {
             clk_state: false,
-            expander,
+            shared_expander,
+            pin_range,
         }
     }
 
     pub fn read(&mut self) -> Option<Direction> {
-        let value = self.expander.read_gpioab().unwrap();
-        let mut read_bits: [bool; 2] = [false; 2];
+        let all_bits = self.shared_expander.read_all_bits();
+        let instrument_select_bits: [bool; 2] =
+            all_bits[self.pin_range.clone()].try_into().unwrap();
 
-        for i in 0..2 {
-            let mask = 1 << i;
-            read_bits[i] = if value & mask == 0 { true } else { false };
-        }
-
-        let [dt, clk] = read_bits;
+        let [dt, clk] = instrument_select_bits;
 
         let mut direction = None;
 

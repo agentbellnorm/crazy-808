@@ -5,11 +5,14 @@ extern crate shared_bus;
 mod buttons;
 mod instrument_select;
 mod leds;
+mod shared_pull_up_input_expander;
+mod variation_toggle;
 
 use crate::buttons::Buttons;
 use crate::instrument_select::InstrumentSelect;
 use crate::leds::Leds;
-use engine::core::get_next_instrument;
+use crate::shared_pull_up_input_expander::SharedPullUpInputExpander;
+use crate::variation_toggle::VariationToggle;
 use engine::engine::Engine;
 use engine::state::State;
 use mcp23017::MCP23017;
@@ -33,7 +36,9 @@ fn main() {
 
     let mut leds = Leds::new(bus);
     let mut buttons = Buttons::new(bus);
-    let mut instrument_select = InstrumentSelect::new(bus);
+    let shared_expander = SharedPullUpInputExpander::new(bus);
+    let mut instrument_select = InstrumentSelect::new(shared_expander.clone(), 0..2);
+    let mut variation_toggle = VariationToggle::new(shared_expander, 2..4);
 
     thread::spawn(move || loop {
         // works fine with 50ms
@@ -46,6 +51,12 @@ fn main() {
             engine.move_instrument_selector(turn);
             println!("instrument: {}", engine.get_selected_instrument());
         }
+
+        if let Some(variation) = variation_toggle.read() {
+            engine.set_variation(variation.to_string());
+            println!("variation: {}", engine.get_variation());
+        }
+
         thread::sleep(Duration::from_millis(1));
     });
 

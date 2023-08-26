@@ -1,7 +1,5 @@
 use crate::{Bus, Expander};
 use mcp23017::{PinMode, MCP23017};
-use std::thread;
-use std::time::Duration;
 
 const BUTTONS_IC2_ADDRESS: u8 = 0x21;
 

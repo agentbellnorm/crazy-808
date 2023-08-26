@@ -5,7 +5,7 @@ use spin_sleep::LoopHelper;
 use std::{
     sync::{mpsc::SyncSender, Arc, Mutex},
     thread,
-    time::{Duration},
+    time::Duration,
 };
 
 const NUMBER_OF_CHANNELS: i32 = 17;
@@ -175,6 +175,10 @@ impl Engine {
 
     pub fn get_selected_instrument(&self) -> i32 {
         self.state.lock().unwrap().selected_instrument
+    }
+
+    pub fn get_variation(&self) -> String {
+        self.state.lock().unwrap().current_variation.clone()
     }
 
     pub fn toggle_channel(&self, channel: i32) {
